@@ -1,13 +1,20 @@
+var flows = ["NORTH FLOW", "SOUTH FLOW", "WEST FLOW", "EAST FLOW"];
+var rwys = ["1L", "1C", "1R", "19L", "19C", "19R", "12", "30"];
+var current = {flow:1, rwys:[3,7]};
+
 // Declare Click Functions
 $(document).ready(function() {
-  $("#flow").click(function() {
-    updateFlow();
+  $("*").contextmenu(function(){
+    return false;
+  });
+  $("#flow").mousedown(function(e) {
+    setFlow(e.button - 1);
   });
   $("#departing").click(function() {
-    updateDepartureRunways();
+    setDepartureRunways();
   });
   $("#status-notes").click(function() {
-    updateStatusNotes();
+    setStatusNotes();
   });
   runClock();
 });
@@ -29,22 +36,28 @@ function splitLines(lines) {
 }
 
 /** Prompt user for new flow and update the display
+ ** @param {number} change - whether to increment (+1) or decrement (-1) the value
  */
-function updateFlow() {
-  var flow = prompt("Enter the flow of landing/departing traffic:");
-  if(flow) $("#flow").html(p(flow.toUpperCase()));
+function setFlow(change) {
+  current.flow += change;
+  if(current.flow < 0) current.flow += flows.length;
+  if(current.flow >= flows.length) current.flow -= flows.length;
+  $("#flow").html(p(flows[current.flow]));
 }
 
 /** Prompt user for new departure runways and update the display
  */
-function updateDepartureRunways() {
-  var rwys = prompt("Enter the active departure runways:");
-  if(rwys) $("#departing").html(p(rwys.toUpperCase()));
+function setDepartureRunways() {
+  var input = prompt("Enter the flow of landing/departing traffic:");
+  if(input) current.rwys = input.split(",");
+  var runways = [];
+  for(var i in current.rwys) runways.push(rwys[current.rwys[i]]);
+  $("#departing").html(p(runways.join(' / ')));
 }
 
 /** Prompt user for new status notes and update the display
  */
-function updateStatusNotes() {
+function setStatusNotes() {
   var notes = prompt("Enter status notes, separated by asterisks (*) :");
   if(notes) $("#status-notes").html(p(splitLines(notes)));
   else if(notes === "") $("#status-notes").html(p("Normal Operations"));
@@ -58,14 +71,16 @@ function runClock() {
     var M = ["January","February","March","April","May","June","July","August","September","October","November","December"][today.getMonth()];
     var N = today.getDate();
     var Y = today.getFullYear();
+    var z = today.getUTCHours();
     var h = today.getHours();
     var m = today.getMinutes();
     var s = today.getSeconds();
+    z = (z<10) ? "0"+z : z;
     h = (h<10) ? "0"+h : h;
     m = (m<10) ? "0"+m : m;
     s = (s<10) ? "0"+s : s;
     $("#localtime").html(h + ":" + m + ":" + s);
-    $("#zulutime").html((h-4) + "z");
+    $("#zulutime").html(z + "z");
     $("#date").html(D + ", " + M + " " + N + ", " + Y);
     var t = setTimeout(runClock, 100);
 }
